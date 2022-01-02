@@ -43,7 +43,7 @@
 <script src='<?php echo $OJ_CDN_URL?>highlight/scripts/shBrushSql.js' type='text/javascript'></script>
 <script language='javascript'>
 SyntaxHighlighter.config.bloggerMode = false;
-SyntaxHighlighter.config.clipboardSwf = 'highlight/scripts/clipboard.swf';
+SyntaxHighlighter.config.clipboardSwf = '<?php echo $OJ_CDN_URL?>highlight/scripts/clipboard.swf';
 SyntaxHighlighter.all();
 </script>
 <?php
@@ -59,7 +59,7 @@ if ($brush=='swift') $brush='csharp';
 echo "<pre class=\"brush:".$brush.";\">";
 ob_start();
 echo "/**************************************************************\n";
-echo "\tProblem: $sproblem_id\n\tUser: $suser_id\n";
+echo "\tProblem: $sproblem_id\n\tUser: $suser_id [$nick] \n";
 echo "\tLanguage: ".$language_name[$slanguage]."\n\tResult: ".$judge_result[$sresult]."\n";
 if ($sresult==4){
 echo "\tTime:".$stime." ms\n";

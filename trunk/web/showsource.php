@@ -21,6 +21,7 @@ $slanguage=$row['language'];
 $sresult=$row['result'];
 $stime=$row['time'];
 $owner=$row['user_id'];
+$nick=$row['nick'];
 $smemory=$row['memory'];
 $sproblem_id=$row['problem_id'];
 $view_user_id=$suser_id=$row['user_id'];
@@ -89,8 +90,7 @@ if (isset($OJ_AUTO_SHARE)&&$OJ_AUTO_SHARE&&isset($_SESSION[$OJ_NAME.'_'.'user_id
 	$sql="SELECT 1 FROM solution where 
 			result=4 and problem_id=$sproblem_id and user_id=?";
 	$rrs=pdo_query($sql,$_SESSION[$OJ_NAME.'_'.'user_id']);
-	$ok=(count($rrs)>0);
-	
+	if(count($rrs)>0) $ok=true;
 }
 
 //check whether user has the right of view solutions of this problem

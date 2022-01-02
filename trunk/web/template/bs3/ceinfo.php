@@ -16,8 +16,8 @@
       <script src="http://cdn.bootcss.com/html5shiv/3.7.0/html5shiv.js"></script>
       <script src="http://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
-<link href='highlight/styles/shCore.css' rel='stylesheet' type='text/css'/>
-<link href='highlight/styles/shThemeDefault.css' rel='stylesheet' type='text/css'/>
+<link href='<?php echo $OJ_CDN_URL?>highlight/styles/shCore.css' rel='stylesheet' type='text/css'/>
+<link href='<?php echo $OJ_CDN_URL?>highlight/styles/shThemeDefault.css' rel='stylesheet' type='text/css'/>
   </head>
 
   <body>
@@ -166,6 +166,10 @@ pats[i]=/应在名为.*的文件中声明/;
 exps[i++]="<?php echo $MSG_DECLARED_FILE_NAMED; ?>";
 pats[i]=/variably modified/;
 exps[i++]="<?php echo $MSG_VARIABLY_MODIFIED; ?>";
+pats[i]=/gets' was not declared in this scope/;
+exps[i++]="<?php echo $MSG_FUNCTION_GETS_REMOVIED; ?>";
+pats[i]=/redefinition of/;
+exps[i++]="重复定义了函数，有些题目要求不提交main函数，提交前请进行确认。";
 
 
 function explain(){

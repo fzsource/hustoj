@@ -17,9 +17,13 @@ require_once ("../include/const.inc.php");
 <?php
 
 function image_save_file($filepath ,$base64_encoded_img) {
-  $fp = fopen($filepath ,"wb");
-  fwrite($fp,base64_decode($base64_encoded_img));
-  fclose($fp);
+	$dirpath=dirname($filepath);
+	if (!file_exists($dirpath)) {
+		 mkdir($dirpath,0755,true);
+	}
+	  $fp = fopen($filepath ,"wb");
+	  fwrite($fp,base64_decode($base64_encoded_img));
+	  fclose($fp);
 }
 
 require_once ("../include/problem.php");
@@ -46,13 +50,22 @@ function getLang($language) {
 }
 
 function submitSolution($pid,$solution,$language) {
-  global $OJ_NAME;
+  global $OJ_NAME,$_SESSION;
   $language = getLang($language);
   $len = mb_strlen($solution,'utf-8');
+  $user_id=$_SESSION[$OJ_NAME.'_'.'user_id'];
+  $sql = "SELECT nick FROM users WHERE user_id=?";
+  $nick = pdo_query($sql, $user_id);
+  if ($nick) {
+    $nick = $nick[0][0];
+  }
+  else {
+    $nick = "Guest";
+  }
 
-  $sql = "INSERT INTO solution(problem_id,user_id,in_date,language,ip,code_length,result) VALUES(?,?,NOW(),?,'127.0.0.1',?,14)";
-  $insert_id = pdo_query($sql, $pid,$_SESSION[$OJ_NAME.'_'.'user_id'], $language, $len);
-  //echo "submiting$language.....";
+  $sql = "INSERT INTO solution(problem_id,user_id,nick,in_date,language,ip,code_length,result) VALUES(?,?,?,NOW(),?,'127.0.0.1',?,14)";
+  $insert_id = pdo_query($sql, $pid,$_SESSION[$OJ_NAME.'_'.'user_id'],$nick, $language, $len);
+//  echo "submiting$language.....$insert_id";
 
   $sql = "INSERT INTO `source_code`(`solution_id`,`source`) VALUES(?,?)";
   pdo_query($sql ,$insert_id, $solution);
@@ -108,7 +121,7 @@ function get_extension($file) {
 }
 
 function import_fps($tempfile) {
-  global $OJ_DATA,$OJ_SAE,$OJ_REDIS,$OJ_REDISSERVER,$OJ_REDISPORT,$OJ_REDISQNAME;
+  global $OJ_DATA,$OJ_SAE,$OJ_REDIS,$OJ_REDISSERVER,$OJ_REDISPORT,$OJ_REDISQNAME,$domain,$DOMAIN;
   $xmlDoc = simplexml_load_file($tempfile, 'SimpleXMLElement', LIBXML_PARSEHUGE);
   $searchNodes = $xmlDoc->xpath("/fps/item");
   $spid = 0;
@@ -141,7 +154,10 @@ function import_fps($tempfile) {
     $hint = getValue ($searchNode,'hint');
     $source = getValue ($searchNode,'source');				
     $spjcode = getValue ($searchNode,'spj');
-    $spj = trim($spjcode)?1:0;
+    if($spjcode) $spjlang=getAttribute($searchNode,'spj','language');
+    $tpjcode = getValue ($searchNode,'tpj');
+    if($tpjcode) $tpjlang=getAttribute($searchNode,'tpj','language');
+    $spj = trim($spjcode.$tpjcode)?1:0;
 
     if (!hasProblem($title)) {
       $pid = addproblem($title, $time_limit, $memory_limit, $description, $input, $output, $sample_input, $sample_output, $hint, $source, $spj, $OJ_DATA);
@@ -208,20 +224,18 @@ function import_fps($tempfile) {
             exit(1);
           }
 
-          $testno++;
- 
-          $newpath = "../upload/pimg".$pid."_".$testno.".".$ext;
-      
-          if ($OJ_SAE)
-            $newpath = "saestor://web/upload/pimg".$pid."_".$testno.".".$ext;
-
+        $testno++;
+ 	$ymd =$domain."/". date("Ymd");
+	$save_path = $ymd . "/";
+	//新文件名
+	$new_file_name = date("YmdHis") . '_' . rand(10000, 99999) . '.' . $ext;
+	$newpath = $save_path."/$pid"."_".$testno."_".$new_file_name;
+         if ($OJ_SAE)
+            $newpath = "saestor://web/upload/".$newpath;
+	 else
+            $newpath="../upload/".$newpath;
+		
           image_save_file($newpath,$base64);
-
-          $newpath = dirname($_SERVER['REQUEST_URI'] )."/../upload/pimg".$pid."_".$testno.".".$ext;
-
-          if ($OJ_SAE)
-            $newpath=$SAE_STORAGE_ROOT."upload/pimg".$pid."_".$testno.".".$ext;
-
           $sql = "UPDATE problem SET description=replace(description,?,?) WHERE problem_id=?";  
           pdo_query($sql,$src,$newpath,$pid);
 
@@ -239,24 +253,49 @@ function import_fps($tempfile) {
 
       if (!isset($OJ_SAE) || !$OJ_SAE) {
         if ($spj) {
-          $basedir = "$OJ_DATA/$pid";
-          $fp = fopen("$basedir/spj.cc","w");
-          fputs($fp, $spjcode);
-          fclose($fp);
-          ////system( " g++ -o $basedir/spj $basedir/spj.cc  ");
-          if (!file_exists("$basedir/spj")) {
-            $fp = fopen("$basedir/spj.c","w");
-            fputs($fp, $spjcode);
-            fclose($fp);
-            ////system( " gcc -o $basedir/spj $basedir/spj.c  ");
+		if($spjcode){
+		  if($spjlang=="C++"){
+			  $basedir = "$OJ_DATA/$pid";
+			  $fp = fopen("$basedir/spj.cc","w");
+			  fputs($fp, $spjcode);
+			  fclose($fp);
+			  ////system( " g++ -o $basedir/spj $basedir/spj.cc  ");
+		  }else{
+			    $fp = fopen("$basedir/spj.c","w");
+			    fputs($fp, $spjcode);
+			    fclose($fp);
+			    ////system( " gcc -o $basedir/spj $basedir/spj.c  ");
 
-            if (!file_exists("$basedir/spj")) {
-              echo "you need to compile $basedir/spj.cc for spj[  g++ -o $basedir/spj $basedir/spj.cc   ]<br> and rejudge $pid";
-            }
-            else {
-              unlink("$basedir/spj.cc");
-            }
-          }
+		  }
+		    if (!file_exists("$basedir/spj")) {
+		      echo "you need to compile $basedir/spj.cc for spj[  g++ -o $basedir/spj $basedir/spj.cc   ]<br> and rejudge $pid";
+		    }
+		    else {
+		      //unlink("$basedir/spj.cc");
+		    }
+  
+		}
+          $basedir = "$OJ_DATA/$pid";
+	  if($tpjcode){
+		  if($tpjlang=="C++"){
+			  $fp = fopen("$basedir/tpj.cc","w");
+			  fputs($fp, $tpjcode);
+			  fclose($fp);
+			  ////system( " g++ -o $basedir/spj $basedir/spj.cc  ");
+		  }else{
+			    $fp = fopen("$basedir/tpj.c","w");
+			    fputs($fp, $spjcode);
+			    fclose($fp);
+			    ////system( " gcc -o $basedir/spj $basedir/spj.c  ");
+		  }
+	    if (!file_exists("$basedir/tpj")) {
+	      echo "you need to compile $basedir/tpj.cc for tpj[  g++ -o $basedir/tpj $basedir/tpj.cc   ]<br> and rejudge $pid";
+	    }
+	    else {
+	      //unlink("$basedir/spj.cc");
+	    }
+		  
+	  }
         }
       }
 
@@ -342,4 +381,22 @@ else {
   //$xmlDoc->load ( $tempfile );
   //$xmlcontent=file_get_contents($tempfile );
 }
+if (isset($OJ_UDP) && $OJ_UDP) {
+  $JUDGE_SERVERS = explode(",",$OJ_UDPSERVER);
+  $JUDGE_TOTAL = count($JUDGE_SERVERS);
+
+  $select = $insert_id%$JUDGE_TOTAL;
+  $JUDGE_HOST = $JUDGE_SERVERS[$select];
+
+  if (strstr($JUDGE_HOST,":")!==false) {
+    $JUDGE_SERVERS = explode(":",$JUDGE_HOST);
+    $JUDGE_HOST = $JUDGE_SERVERS[0];
+    $OJ_UDPPORT = $JUDGE_SERVERS[1];
+  }
+  if(isset($OJ_JUDGE_HUB_PATH))
+	send_udp_message($JUDGE_HOST, $OJ_UDPPORT, $OJ_JUDGE_HUB_PATH);
+  else
+  	send_udp_message($JUDGE_HOST, $OJ_UDPPORT, 0);
+}
+
 ?>

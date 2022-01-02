@@ -48,7 +48,7 @@ div[class*=ace_br] {
             //echo "<title>$MSG_PROBLEM ".$PID[$pid].": ".$row['title']." </title>";
             echo "问题 ".$PID[$pid].": ".$row['title'];
           }
-          if($row['defunct']==Y)
+          if($row['defunct']=="Y")
           echo "<span class=\"ui tiny red label\">未公开</span>";
         ?>
       </h1>
@@ -72,19 +72,20 @@ div[class*=ace_br] {
           <span class="ui label">提交：<?php echo $row['submit']; ?></span>
           <span class="ui label">通过：<?php echo $row['accepted']; ?></span>
       </div>
-</div>
+</div>  
 <div class="ui grid">
-  <div class="row">
+  <div class="row"> 
     <div class="column">
       <div class="ui buttons">
 
           <?php
             if($pr_flag){
-              echo "<a class=\"small ui primary button\" href=\"submitpage.php?id=$id\">提交</a>";
+              echo "<a  id='submit'  class=\"small ui primary button\" href=\"submitpage.php?id=$id\">提交</a>";
               echo "<a class=\"small ui positive button\" href=\"status.php?problem_id=$id\">提交记录</a>";
               echo "<a class=\"small ui orange button\" href=\"problemstatus.php?id=$id\">统计</a>";
+	      echo "<a class=\"small ui red button\" href=\"discuss.php?pid=$id\">$MSG_BBS</a>";
             }else{
-              echo "<a href=\"contest.php?cid=$cid\" class=\"ui orange button\">返回比赛</a>";
+              echo "<a  id='submit'  href=\"contest.php?cid=$cid\" class=\"ui orange button\">返回比赛</a>";
               echo "<a class=\"small ui primary button\" href=\"submitpage.php?cid=$cid&pid=$pid&langmask=$langmask\">提交</a>";
               echo "<a class=\"small ui positive button\" href=\"status.php?problem_id=$PID[$pid]&cid=$cid\">提交记录</a>";
             }
@@ -93,7 +94,8 @@ div[class*=ace_br] {
       </div>
      
       <?php
-        if(isset($_SESSION[$OJ_NAME.'_'.'administrator'])){
+        if ( isset($_SESSION[$OJ_NAME.'_'.'administrator']) || isset($_SESSION[$OJ_NAME.'_'."p".$row['problem_id']])  ) {  //only  the original editor can edit this  problem
+        
         require_once("include/set_get_key.php");
       ?>
       
@@ -215,6 +217,21 @@ div[class*=ace_br] {
   editor.container.style.fontFamily = "'Roboto Mono', 'Bitstream Vera Sans Mono', 'Menlo', 'Consolas', 'Lucida Console', monospace";
   editor.setShowPrintMargin(false);
   editor.renderer.updateFontSize();
+  function transform(){
+        let height=document.body.clientHeight;
+        let width=parseInt(document.body.clientWidth*0.618);
+        let width2=parseInt(document.body.clientWidth*0.382);
+        let submitURL=$("#submit")[0].href;
+        console.log(width);
+        let main=$("#main");
+        let problem=main.html();
+        main.removeClass("container");
+        main.css("width",width2);
+        main.css("margin-left","10px");
+        main.parent().append("<div id='submitPage' class='container' style='opacity:0.8;position:fixed;z-index:1000;top:49px;right:-"+width2+"px'></div>");
+        //main.css("float","left");
+        $("#submitPage").html("<iframe src='"+submitURL+"&spa' width='"+width+"px' height='"+height+"px' ></iframe>");
+  }
 
   function submit_code() {
     if (!$('#submit_code input[name=answer]').val().trim() && !editor.getValue().trim()) return false;

@@ -7,8 +7,9 @@ function auto_refresh() {
 	var rows = tb.rows;
 	for (var i=rows.length-1; i>0; i--) {
 		var result = $(rows[i].cells[4].children[0]).attr("result");
+		result=$(rows[i].cells[4]).find("span").attr("result");
 		rows[i].cells[4].className = "td_result";
-		var sid = rows[i].cells[0].innerHTML;
+		var sid = $(rows[i].cells[0]).text();
 		
 		if (result<4) {
 			window.setTimeout("fresh_result("+sid+")",interval);
@@ -23,7 +24,7 @@ function findRow(solution_id) {
 	var rows = tb.rows;
 	for (var i=1; i<rows.length; i++) {
 		var cell = rows[i].cells[0];
-		if (cell.innerHTML==solution_id)
+		if ($(cell).text()==solution_id)
 			return rows[i];
 	}
 }
@@ -66,7 +67,8 @@ function fresh_result(solution_id) {
 			else {
 				//console.log(ra[0]);
 				switch (ra[0]) {
-					case 4:
+					case  4:
+					case 14:
 						row.cells[4].innerHTML = "<a href=reinfo.php?sid="+solution_id+" class='"+judge_color[ra[0]]+"'>"+judge_result[ra[0]]+"</a>";
 						break;
 					case 5:
@@ -101,14 +103,14 @@ for (var i=0; i<10; i++) {
 hj_ss += "</select>";
 hj_ss += "<input name='manual' type='hidden'>";
 hj_ss += "<input class='http_judge form-control' size=5 title='输入判定原因与提示' name='explain' type='text'>";
-hj_ss += "<input type='button' class='http_judge btn' name='manual' value='确定' onclick='http_judge(this)' >";
+hj_ss += "<input type='button' class='http_judge' name='manual' value='确定' onclick='http_judge(this)' >";
 
 $(".http_judge_form").append(hj_ss);
 
 auto_refresh();
 
 $(".td_result").mouseover(function () {
-  //$(this).children(".btn").hide(300);
+  //$(this).children(".label").hide(300);
   $(this).find("form").show(600);
   var sid = $(this).find("span[class=original]").attr("sid");
   $(this).find("span[class=original]").load("status-ajax.php?q=user_id&solution_id="+sid);

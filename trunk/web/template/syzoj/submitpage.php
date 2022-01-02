@@ -32,8 +32,8 @@ $langmask=$_GET['langmask'];
 else
 $langmask=$OJ_LANGMASK;
 $lang=(~((int)$langmask))&((1<<($lang_count))-1);
-if(isset($_COOKIE['lastlang'])) $lastlang=$_COOKIE['lastlang'];
-else $lastlang=0;
+$lastlang=$_COOKIE['lastlang'];
+if($lastlang=="undefined") $lastlang=1;
 for($i=0;$i<$lang_count;$i++){
 if($lang&(1<<$i))
 echo"<option value=$i ".( $lastlang==$i?"selected":"").">
@@ -270,7 +270,7 @@ function reloadtemplate(lang){
    switchLang(lang);
 }
 function openBlockly(){
-   $("#frame_source").hide();
+   $("#source").hide();
    $("#TestRun").hide();
    $("#language")[0].scrollIntoView();
    $("#language").val(6).hide();
@@ -311,9 +311,11 @@ function loadFromBlockly(){
     editor.setTheme("ace/theme/chrome");
     switchLang(<?php echo $lastlang ?>);
     editor.setOptions({
-	    enableBasicAutocompletion: true,
-	    enableSnippets: true,
-	    enableLiveAutocompletion: true
+        enableBasicAutocompletion: true,
+        enableSnippets: true,
+        enableLiveAutocompletion: false,
+        fontFamily: "Consolas",
+        fontSize: "20px"
     });
    reloadtemplate($("#language").val()); 
      

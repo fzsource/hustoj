@@ -2,10 +2,14 @@
 require("admin-header.php");
 require_once("../include/set_get_key.php");
 
-if(!(isset($_SESSION[$OJ_NAME.'_'.'administrator']) || isset($_SESSION[$OJ_NAME.'_'.'problem_editor']))){
+if(!(isset($_SESSION[$OJ_NAME.'_'.'administrator'])
+        || isset($_SESSION[$OJ_NAME.'_'.'problem_editor'])
+        || isset($_SESSION[$OJ_NAME.'_'.'contest_creator'])
+        )){
   echo "<a href='../loginpage.php'>Please Login First!</a>";
   exit(1);
 }
+
 
 if(isset($OJ_LANG)){
   require_once("../lang/$OJ_LANG.php");
@@ -53,7 +57,7 @@ if(isset($_GET['keyword']) && $_GET['keyword']!=""){
 
 <center>
 <form action=problem_list.php class="form-search form-inline">
-  <input type="text" name=keyword class="form-control search-query" placeholder="<?php echo $MSG_PROBLEM_ID.', '.$MSG_TITLE.', '.$MSG_Description.', '.$MSG_SOURCE?>">
+  <input type="text" name=keyword value="<?php echo htmlentities($_GET['keyword'],ENT_QUOTES,"utf-8")?>" class="form-control search-query" placeholder="<?php echo $MSG_PROBLEM_ID.', '.$MSG_TITLE.', '.$MSG_Description.', '.$MSG_SOURCE?>">
   <button type="submit" class="form-control"><?php echo $MSG_SEARCH?></button>
 </form>
 </center>
@@ -75,6 +79,7 @@ echo "</select>";
 <center>
 <table width=100% border=1 style="text-align:center;">
   <form method=post action=contest_add.php>
+<input type="hidden" name=keyword value="<?php echo htmlentities($_GET['keyword'],ENT_QUOTES,"utf-8")?>">
     <tr>
       <td width=60px><?php echo $MSG_PROBLEM_ID?><input type=checkbox style='vertical-align:2px;' onchange='$("input[type=checkbox]").prop("checked", this.checked)'></td>
       <td><?php echo $MSG_TITLE?></td>
@@ -83,17 +88,18 @@ echo "</select>";
       <?php
       if(isset($_SESSION[$OJ_NAME.'_'.'administrator']) ||isset($_SESSION[$OJ_NAME.'_'.'problem_editor'])){
         if(isset($_SESSION[$OJ_NAME.'_'.'administrator']) ||isset($_SESSION[$OJ_NAME.'_'.'problem_editor']))
-          echo "<td>STATUS</td><td>DELETE</td>";
-        echo "<td>EDIT</td><td>TESTDATA</td>";
+          echo "<td>$MSG_STATUS</td><td>$MSG_DELETE</td>";
+        echo "<td>$MSG_EDIT</td><td>$MSG_TESTDATA</td>";
       }
       ?>
     </tr>
         <tr>
-      <td colspan=2 style="height:40px;">Checked to</td>
+        <td colspan=2 style="height:40px;"><?php echo "$MSG_CHECK_TO"?></td>
       <td colspan=6>
-        <input type=submit name='problem2contest' value='New Contest'>
-        <input type=submit name='enable' value='Available' onclick='$("form").attr("action","problem_df_change.php")'>
-        <input type=submit name='disable' value='Reserved' onclick='$("form").attr("action","problem_df_change.php")'>
+      <input type=submit name='problem2contest' value='<?php echo $MSG_NEW_CONTEST?>'>
+      <input type=submit name='enable' value='<?php echo $MSG_AVAILABLE ?>' onclick='$("form").attr("action","problem_df_change.php")'>
+      <input type=submit name='disable' value='<?php echo $MSG_RESERVED ?>' onclick='$("form").attr("action","problem_df_change.php")'>
+      <input type=submit name='plist' value='<?php echo $MSG_NEW_PROBLEM_LIST?>' onclick='$("form").attr("action","news_add_page.php")'>
       </td>
     </tr>
     <?php
@@ -105,16 +111,18 @@ echo "</select>";
         echo "<td>".$row['in_date']."</td>";
         if(isset($_SESSION[$OJ_NAME.'_'.'administrator'])||isset($_SESSION[$OJ_NAME.'_'.'problem_editor'])){
           if(isset($_SESSION[$OJ_NAME.'_'.'administrator']) || isset($_SESSION[$OJ_NAME.'_'.'problem_editor'])){
-            echo "<td><a href=problem_df_change.php?id=".$row['problem_id']."&getkey=".$_SESSION[$OJ_NAME.'_'.'getkey'].">".($row['defunct']=="N"?"<span titlc='click to reserve it' class=green>Available</span>":"<span class=red title='click to be available'>Reserved</span>")."</a><td>";
+            echo "<td><a href=problem_df_change.php?id=".$row['problem_id']."&getkey=".$_SESSION[$OJ_NAME.'_'.'getkey'].">".($row['defunct']=="N"?"<span titlc='click to reserve it' class=green>$MSG_AVAILABLE</span>":"<span class=red title='click to be available'>$MSG_RESERVED</span>")."</a><td>";
             if($OJ_SAE||function_exists("system")){
     ?>
-              <a href=# onclick='javascript:if(confirm("Delete?")) location.href="problem_del.php?id=<?php echo $row['problem_id']?>&getkey=<?php echo $_SESSION[$OJ_NAME.'_'.'getkey']?>"'>Delete</a>
+              <a href=# onclick='javascript:if(confirm("Delete?")) location.href="problem_del.php?id=<?php echo $row['problem_id']?>&getkey=<?php echo $_SESSION[$OJ_NAME.'_'.'getkey']?>"'>
+<?php echo $MSG_DELETE ?>
+              </a>
         <?php
         }
       }
-      if(isset($_SESSION[$OJ_NAME.'_'.'administrator']) || isset($_SESSION[$OJ_NAME.'_'."p".$row['problem_id']]) ||isset($_SESSION[$OJ_NAME.'_'.'problem_editor'])){
-        echo "<td><a href=problem_edit.php?id=".$row['problem_id']."&getkey=".$_SESSION[$OJ_NAME.'_'.'getkey'].">Edit</a>";
-        echo "<td><a href='javascript:phpfm(".$row['problem_id'].");'>TestData</a>";
+      if(isset($_SESSION[$OJ_NAME.'_'.'administrator']) || isset($_SESSION[$OJ_NAME.'_'."p".$row['problem_id']]) ){
+        echo "<td><a href=problem_edit.php?id=".$row['problem_id']."&getkey=".$_SESSION[$OJ_NAME.'_'.'getkey'].">$MSG_EDIT</a>";
+        echo "<td><a href='javascript:phpfm(".$row['problem_id'].");'>$MSG_TEST_DATA</a>";
       }
     }
     echo "</tr>";
@@ -123,11 +131,13 @@ echo "</select>";
     <tr>
       <td colspan=2 style="height:40px;">Checked to</td>
       <td colspan=6>
-        <input type=submit name='problem2contest' value='New Contest'>
-        <input type=submit name='enable' value='Available' onclick='$("form").attr("action","problem_df_change.php")'>
-        <input type=submit name='disable' value='Reserved' onclick='$("form").attr("action","problem_df_change.php")'>
+      <input type=submit name='problem2contest' value='<?php echo $MSG_NEW_CONTEST?>'>
+      <input type=submit name='enable' value='<?php echo $MSG_AVAILABLE ?>' onclick='$("form").attr("action","problem_df_change.php")'>
+      <input type=submit name='disable' value='<?php echo $MSG_RESERVED ?>' onclick='$("form").attr("action","problem_df_change.php")'>
+      <input type=submit name='plist' value='<?php echo $MSG_NEW_PROBLEM_LIST?>' onclick='$("form").attr("action","news_add_page.php")'>
       </td>
     </tr>
+
   </form>
 </table>
 </center>

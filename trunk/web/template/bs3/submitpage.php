@@ -58,8 +58,8 @@
                 
                 $lang=(~((int)$langmask))&((1<<($lang_count))-1);
                 
-                if(isset($_COOKIE['lastlang'])) $lastlang=$_COOKIE['lastlang'];
-                else $lastlang=0;
+                $lastlang=$_COOKIE['lastlang'];
+                if($lastlang=="undefined") $lastlang=1;    // default C++ 
                 
                 for($i=0;$i<$lang_count;$i++){
                   if($lang&(1<<$i))
@@ -337,7 +337,7 @@
 
 
     function openBlockly(){
-      $("#frame_source").hide();
+      $("#source").hide();
       $("#TestRun").hide();
       $("#language")[0].scrollIntoView();
       $("#language").val(6).hide();
@@ -384,7 +384,9 @@
       editor.setOptions({
         enableBasicAutocompletion: true,
         enableSnippets: true,
-        enableLiveAutocompletion: true
+        enableLiveAutocompletion: false,
+        fontFamily: "Consolas",
+        fontSize: "20px"
       });
     </script>
   <?php }?>
